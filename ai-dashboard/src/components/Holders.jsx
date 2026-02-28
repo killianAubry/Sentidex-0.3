@@ -1,55 +1,41 @@
 import React from 'react';
 import Card from './Card';
 
-const Holders = () => {
+const Holders = ({ className, onMoveUp, onMoveDown }) => {
   return (
     <Card
-      className="col-span-1"
+      className={className}
+      onMoveUp={onMoveUp}
+      onMoveDown={onMoveDown}
       title="Holders"
-      extra={
-        <span className="text-[10px] text-zinc-500">Time Held / Holdings / Whale</span>
-      }
+      extra={<span className="text-[8px] text-zinc-500 uppercase tracking-tighter">Time Held / Holdings / Whale</span>}
     >
-      <div className="flex items-center gap-4 mb-4 mt-2">
-        <div className="flex-1">
-           <p className="text-[10px] text-zinc-500 uppercase tracking-wider mb-1">Cruisers</p>
-           <div className="flex items-baseline gap-1">
-             <span className="text-xl font-bold">20%</span>
-           </div>
+      <div className="flex justify-between items-center mt-2">
+        <div>
+          <p className="text-[8px] text-zinc-600 uppercase font-bold">Cruisers</p>
+          <p className="text-xl font-bold">20%</p>
         </div>
-        <div className="flex-1 border-l border-[#262626] pl-4">
-           <p className="text-[10px] text-zinc-500 uppercase tracking-wider mb-1">Holders</p>
-           <div className="flex items-baseline gap-1">
-             <span className="text-xl font-bold">75%</span>
-           </div>
+        <div>
+          <p className="text-[8px] text-zinc-600 uppercase font-bold">Holders</p>
+          <p className="text-xl font-bold">75%</p>
         </div>
-        <div className="flex-1 border-l border-[#262626] pl-4 opacity-50">
-           <p className="text-[10px] text-zinc-500 uppercase tracking-wider mb-1">Traders</p>
-           <div className="flex items-baseline gap-1">
-             <span className="text-xl font-bold">5%</span>
-           </div>
+        <div>
+          <p className="text-[8px] text-zinc-600 uppercase font-bold">Traders</p>
+          <p className="text-xl font-bold">5%</p>
         </div>
       </div>
 
-      <div className="relative h-12 w-full mt-6 bg-[#1a1a1a] rounded overflow-hidden">
-        <div className="absolute left-0 top-0 h-full w-[20%] bg-zinc-700"></div>
-        <div className="absolute left-[20%] top-0 h-full w-[75%] bg-zinc-500"></div>
-        <div className="absolute left-[95%] top-0 h-full w-[5%] bg-zinc-800"></div>
-        <div className="absolute inset-0 flex items-center justify-between px-2">
-           <div className="flex flex-wrap gap-0.5">
-              {Array.from({ length: 60 }).map((_, i) => (
-                <div key={i} className="w-[1px] h-6 bg-zinc-400 opacity-20" />
-              ))}
-           </div>
+      <div className="mt-6">
+        <div className="w-full h-8 bg-[#1a1a1a] rounded flex overflow-hidden border border-[#262626]/30">
+          <div className="h-full bg-zinc-700/50 w-[20%]" />
+          <div className="h-full bg-zinc-600/30 w-[60%]" />
+          <div className="h-full bg-zinc-500/20 w-[20%]" />
         </div>
-      </div>
-
-      <div className="flex items-center justify-between text-[10px] text-zinc-500 mt-4">
-         <div className="flex gap-4">
-           <span>Whales <span className="text-zinc-300">20.47%</span></span>
-           <span>Others <span className="text-zinc-300">79.53%</span></span>
-         </div>
-         <span className="text-zinc-400 hover:text-white cursor-pointer transition-colors">See all</span>
+        <div className="flex justify-between mt-2 text-[8px] font-bold">
+           <span className="text-zinc-500">Whales <span className="text-white">20.47%</span></span>
+           <span className="text-zinc-500">Others <span className="text-white">79.53%</span></span>
+           <span className="text-zinc-600 hover:text-white cursor-pointer transition-colors">See all</span>
+        </div>
       </div>
     </Card>
   );

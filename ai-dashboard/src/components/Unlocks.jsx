@@ -1,75 +1,37 @@
 import React from 'react';
 import Card from './Card';
-import { PieChart, Pie, Cell, ResponsiveContainer, Label } from 'recharts';
 
-const data = [
-  { name: 'Unlocked', value: 34 },
-  { name: 'Locked', value: 66 },
-];
-const COLORS = ['#ffffff', '#262626'];
-
-const Unlocks = () => {
+const Unlocks = ({ className, onMoveUp, onMoveDown }) => {
   return (
     <Card
-      className="col-span-1"
+      className={className}
+      onMoveUp={onMoveUp}
+      onMoveDown={onMoveDown}
       title="Unlocks"
-      extra={
-        <span className="text-[10px] text-zinc-500">Time Held / Holdings / Whale</span>
-      }
+      extra={<span className="text-[8px] text-zinc-500 uppercase tracking-tighter">Time Held / Holdings / Whale</span>}
     >
-      <div className="flex items-center gap-6 mt-4">
-        <div className="h-[120px] w-[120px] relative">
-          <ResponsiveContainer width="100%" height="100%">
-            <PieChart>
-              <Pie
-                data={data}
-                cx="50%"
-                cy="50%"
-                innerRadius={45}
-                outerRadius={55}
-                paddingAngle={0}
-                dataKey="value"
-                startAngle={90}
-                endAngle={-270}
-              >
-                {data.map((entry, index) => (
-                  <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} stroke="none" />
-                ))}
-              </Pie>
-            </PieChart>
-          </ResponsiveContainer>
-          <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-             <span className="text-xl font-bold">34%</span>
-             <span className="text-[8px] text-zinc-500 uppercase">Unlocked</span>
-          </div>
-        </div>
+      <div className="flex justify-center items-center h-full min-h-[150px] relative">
+         <div className="text-center">
+            <p className="text-2xl font-bold">34%</p>
+            <p className="text-[8px] text-zinc-500 uppercase tracking-widest mt-1">Unlocked</p>
+         </div>
 
-        <div className="flex-1 space-y-2 mt-2">
-           <div className="flex items-center justify-between text-[10px]">
-             <div className="flex items-center gap-1.5 font-medium">
-               <div className="w-1.5 h-1.5 bg-white rounded-full"></div> Total Locked
-             </div>
-             <span className="text-zinc-500 font-bold">13.85%</span>
-           </div>
-           <div className="flex items-center justify-between text-[10px]">
-             <div className="flex items-center gap-1.5 font-medium">
-               <div className="w-1.5 h-1.5 bg-zinc-600 rounded-full"></div> TBD locked
-             </div>
-             <span className="text-zinc-500 font-bold">52.17%</span>
-           </div>
-           <div className="flex items-center justify-between text-[10px]">
-             <div className="flex items-center gap-1.5 font-medium">
-               <div className="w-1.5 h-1.5 bg-zinc-800 rounded-full"></div> Unlocked
-             </div>
-             <span className="text-zinc-500 font-bold">33.98%</span>
-           </div>
-           <div className="flex items-center justify-between text-[10px]">
-             <div className="flex items-center gap-1.5 font-medium">
-               <div className="w-1.5 h-1.5 bg-zinc-900 rounded-full"></div> Untracked
-             </div>
-             <span className="text-zinc-500 font-bold">0.00%</span>
-           </div>
-        </div>
+         <div className="absolute top-0 right-0 h-full flex flex-col justify-center gap-2">
+            {[
+              { label: 'Total Locked', value: '13.85%', color: 'bg-white' },
+              { label: 'TBD locked', value: '52.17%', color: 'bg-zinc-600' },
+              { label: 'Unlocked', value: '33.98%', color: 'bg-zinc-700' },
+              { label: 'Untracked', value: '0.00%', color: 'bg-zinc-800' },
+            ].map(item => (
+              <div key={item.label} className="flex items-center justify-between gap-8 text-[8px] font-bold">
+                 <div className="flex items-center gap-2">
+                    <div className={`w-1.5 h-1.5 rounded-full ${item.color}`} />
+                    <span className="text-zinc-500 whitespace-nowrap">{item.label}</span>
+                 </div>
+                 <span className="text-white">{item.value}</span>
+              </div>
+            ))}
+         </div>
       </div>
     </Card>
   );
