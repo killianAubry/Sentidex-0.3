@@ -1,40 +1,45 @@
 import React from 'react';
 import Card from './Card';
 
-const Holders = ({ className, onMoveUp, onMoveDown }) => {
+const HOLDER_TYPES = [
+  { label: 'Cruisers', value: '20%', num: 20, color: 'bg-zinc-500' },
+  { label: 'Holders', value: '75%', num: 75, color: 'bg-white' },
+  { label: 'Traders', value: '5%', num: 5, color: 'bg-zinc-700' },
+];
+
+const Holders = ({ className }) => {
   return (
     <Card
       className={className}
-      onMoveUp={onMoveUp}
-      onMoveDown={onMoveDown}
+      bodyClassName="flex flex-col justify-between"
       title="Holders"
-      extra={<span className="text-[8px] text-zinc-500 uppercase tracking-tighter">Time Held / Holdings / Whale</span>}
+      extra={<span className="text-[8px] text-zinc-600 uppercase tracking-tight">Time Held / Holdings / Whale</span>}
     >
-      <div className="flex justify-between items-center mt-2">
-        <div>
-          <p className="text-[8px] text-zinc-600 uppercase font-bold">Cruisers</p>
-          <p className="text-xl font-bold">20%</p>
-        </div>
-        <div>
-          <p className="text-[8px] text-zinc-600 uppercase font-bold">Holders</p>
-          <p className="text-xl font-bold">75%</p>
-        </div>
-        <div>
-          <p className="text-[8px] text-zinc-600 uppercase font-bold">Traders</p>
-          <p className="text-xl font-bold">5%</p>
-        </div>
+      {/* Main stats */}
+      <div className="flex justify-between items-end">
+        {HOLDER_TYPES.map(({ label, value }) => (
+          <div key={label}>
+            <p className="text-[8px] text-zinc-600 uppercase font-bold mb-1">{label}</p>
+            <p className="text-xl font-bold leading-none">{value}</p>
+          </div>
+        ))}
       </div>
 
-      <div className="mt-6">
-        <div className="w-full h-8 bg-[#1a1a1a] rounded flex overflow-hidden border border-[#262626]/30">
-          <div className="h-full bg-zinc-700/50 w-[20%]" />
-          <div className="h-full bg-zinc-600/30 w-[60%]" />
-          <div className="h-full bg-zinc-500/20 w-[20%]" />
+      {/* Bar */}
+      <div className="space-y-1.5">
+        <div className="w-full h-6 bg-[#111] rounded-lg flex overflow-hidden border border-[#1e1e1e]">
+          {HOLDER_TYPES.map(({ label, num, color }) => (
+            <div
+              key={label}
+              className={`h-full ${color} opacity-60`}
+              style={{ width: `${num}%` }}
+            />
+          ))}
         </div>
-        <div className="flex justify-between mt-2 text-[8px] font-bold">
-           <span className="text-zinc-500">Whales <span className="text-white">20.47%</span></span>
-           <span className="text-zinc-500">Others <span className="text-white">79.53%</span></span>
-           <span className="text-zinc-600 hover:text-white cursor-pointer transition-colors">See all</span>
+        <div className="flex justify-between items-center">
+          <span className="text-[8px] text-zinc-600">Whales <span className="text-zinc-300 font-bold">20.47%</span></span>
+          <span className="text-[8px] text-zinc-600">Others <span className="text-zinc-300 font-bold">79.53%</span></span>
+          <button className="text-[8px] text-zinc-600 hover:text-white transition-colors">See all →</button>
         </div>
       </div>
     </Card>
