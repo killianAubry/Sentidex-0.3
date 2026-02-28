@@ -1,317 +1,250 @@
-# Trading Automation Platform — Backend Architecture Specification
+# Trading Automation Platform — Zero-Cost MVP Backend Architecture
 
 ## 1. Purpose and Scope
 
-This document defines the target backend architecture for a low-latency trading automation platform with:
+This document defines the **$0 MVP backend architecture** for validating the trading automation product quickly.
 
-- Real-time forex data ingestion and event processing.
-- User-configurable workflow/rule execution.
-- Multi-mode signal handling (alert-only, confirm-before-execute, auto-execute).
-- Risk management enforcement.
-- Commodity disruption intelligence for a globe visualization.
-- Real-time client updates via WebSockets.
-- Usage-based metering and billing.
+The MVP is intentionally constrained to prove only core product value:
 
-The design prioritizes **event-driven processing**, **fault isolation**, and **horizontal scalability**.
+- Users can create simple workflow rules.
+- Rules evaluate correctly on live-ish market data.
+- Signals can be paper-executed and logged.
+
+This version explicitly avoids production-scale infrastructure until there is real user validation.
 
 ---
 
-## 2. Architecture Principles
+## 2. Build / Do-Not-Build Boundaries
 
-1. **Event-first system design**
-   - Core internal communication is asynchronous and broker-based.
-   - Services are loosely coupled through immutable events.
+### Build now (MVP)
 
-2. **Low-latency hot path**
-   - Tick ingestion → rule evaluation → risk check → execution remains in memory whenever possible.
-   - No synchronous relational database queries in the per-tick critical path.
+- Workflow/rule engine (core value)
+- Basic forex market ingestion from free sources
+- Paper trading simulation
+- Python backend in a single local process
 
-3. **Independent scalability**
-   - Components scale independently via consumer groups and stateless workers.
+### Do **not** build yet
 
-4. **Operational resilience**
-   - Circuit breakers, retries with backoff, idempotency keys, and dead-letter handling are mandatory.
+- Kafka clusters
+- Kubernetes
+- Paid broker execution
+- High-frequency / ultra-low-latency infrastructure
+- Complex microservice decomposition
 
-5. **Auditability and replayability**
-   - Persistent event logs and execution records support forensic analysis, compliance, and analytics.
+These are post-validation concerns.
 
 ---
 
-## 3. High-Level Logical Architecture
+## 3. Free Market Data Strategy
 
-```mermaid
-flowchart LR
-    OANDA_STREAM[OANDA Price Stream SSE] --> INGEST_FX[Forex Ingestion Workers]
-    INGEST_FX --> KAFKA[(Kafka)]
+### Recommended primary source
 
-    EXT_API[Geo/Weather/News APIs] --> INGEST_EXT[External Signal Ingestion]
-    INGEST_EXT --> KAFKA
+- **OANDA practice account stream**
+  - Free practice environment
+  - Realistic forex ticks
+  - Good fit for paper trading flows
 
-    KAFKA --> INDICATOR[Indicator Computation Service]
-    INDICATOR --> REDIS[(Redis)]
+### Optional fallback/additional sources
 
-    KAFKA --> RULE[Rule Engine Workers]
-    REDIS --> RULE
-    RULE --> SIGNALS[workflow.signals]
+- Alpha Vantage (free tier, rate-limited)
+- Twelve Data (free tier)
 
-    SIGNALS --> RISK[Risk Interceptor Service]
-    RISK --> EXEC[Execution Service]
-    RISK --> CONFIRM[Confirmation Service]
-    RISK --> ALERT[Alert Service]
+For MVP speed and realism, prefer OANDA practice first.
 
-    EXEC --> OANDA_ORDERS[OANDA Order API]
-    EXEC --> TSDB[(PostgreSQL + TimescaleDB)]
-    CONFIRM --> TSDB
-    ALERT --> TSDB
+---
 
-    KAFKA --> DISRUPTION[Disruption Analysis Service]
-    DISRUPTION --> DISRUPT_TOPIC[disruption.events]
-    DISRUPT_TOPIC --> PORTFOLIO[Portfolio Relevance Service]
+## 4. MVP Technology Stack (100% Free)
 
-    API_GW[API Gateway] --> APP_API[Application APIs]
-    APP_API --> PG[(PostgreSQL)]
-    APP_API --> MONGO[(MongoDB)]
+- **Language**: Python
+- **Backend framework**: FastAPI
+- **Realtime transport**: WebSockets
+- **Data processing**: pandas, numpy, pandas-ta
+- **Storage**: SQLite (`sqlite3` built in)
+- **Runtime target**: Local machine (single process)
 
-    SIGNALS --> WS[WebSocket Gateway]
-    DISRUPT_TOPIC --> WS
-    EXEC --> WS
-    CONFIRM --> WS
-    ALERT --> WS
+Install baseline dependencies:
 
-    EXEC --> BILLING_TOPIC[billing.events]
-    APP_API --> BILLING_TOPIC
-    BILLING_TOPIC --> METERING[Metering Service]
-    METERING --> BILLING_DB[(Billing DB)]
-    METERING --> STRIPE[Stripe]
+```bash
+pip install fastapi uvicorn pandas numpy websockets pandas-ta
 ```
 
----
-
-## 4. Layered Component Design
-
-## 4.1 Data Ingestion Layer
-
-### Responsibilities
-- Maintain persistent market data subscriptions to OANDA streaming endpoints.
-- Normalize and validate inbound ticks.
-- Publish canonical tick events to Kafka topics by instrument.
-
-### Core Topics
-- `prices.forex.<instrument>` (example: `prices.forex.EUR_USD`)
-- `events.geo.raw`
-- `events.weather.raw`
-- `events.news.raw`
-
-### Design Notes
-- Keep stream consumers long-lived and reconnect-safe.
-- Include source timestamp, ingest timestamp, instrument, bid/ask, and sequence metadata.
-- Partition by instrument to preserve order within pair.
+This stack intentionally replaces Kafka/Redis/microservices for the MVP phase.
 
 ---
 
-## 4.2 Rule Engine Layer
+## 5. Minimal Local Architecture
 
-### Responsibilities
-- Evaluate active user workflows against incoming market/indicator events.
-- Emit signals corresponding to selected execution mode.
+Single-process event flow:
 
-### Workflow Model
-- User workflows are stored as JSON DAGs.
-- Nodes:
-  - Trigger nodes (price crosses, time windows, volatility thresholds).
-  - Condition nodes (indicator checks, session constraints, user-specific predicates).
-  - Action nodes (alert, confirm, execute).
+```text
+Price Feed -> Indicator Logic -> Rule Engine -> Paper Execution -> Web UI
+```
 
-### Performance Strategy
-- Active rules loaded into Redis-backed cache and precompiled in worker memory.
-- O(1)-style index lookup by instrument and trigger type.
-- No per-event relational reads in hot path.
+### In-memory event bus (Kafka replacement)
 
-### Output Topic
-- `workflow.signals` with event types:
-  - `SIGNAL_ALERT`
-  - `SIGNAL_PENDING_CONFIRMATION`
-  - `SIGNAL_AUTO_EXECUTE`
+```python
+from queue import Queue
+
+event_bus = Queue()
+```
+
+This is sufficient for local testing and product validation.
 
 ---
 
-## 4.3 Indicator Computation Service
+## 6. Core MVP Components
 
-### Responsibilities
-- Maintain rolling windows and stateful technical indicators per instrument.
-- Compute indicators such as RSI, MACD, Bollinger Bands.
+## 6.1 Price Ingestion
 
-### State Model
-- Rolling windows and incremental computation state stored in Redis.
-- Periodic snapshots or checkpoints for warm restart acceleration.
+Responsibilities:
 
-### Output
-- Emits indicator updates for rule engine consumption.
+- Connect to OANDA practice stream.
+- Normalize incoming ticks into a simple internal event schema.
+- Push events into the in-memory queue.
 
----
+Output example fields:
 
-## 4.4 Trade Execution Layer
+- `instrument`
+- `bid`
+- `ask`
+- `timestamp`
 
-### Execution Service
-- Consumes approved `SIGNAL_AUTO_EXECUTE` signals.
-- Sends orders to OANDA Order Management API.
-- Persists execution outcome and emits user notifications.
-- Enforces idempotency via unique `signal_id` + Redis key TTL lock.
+## 6.2 Indicator Engine
 
-### Confirmation Service
-- Consumes `SIGNAL_PENDING_CONFIRMATION`.
-- Creates pending order records and prompts user over WebSocket.
-- Applies expiration windows (example: 30s) for auto-cancel behavior.
+Responsibilities:
 
-### Alert Service
-- Consumes `SIGNAL_ALERT`.
-- Delivers notifications (email, SMS, push, in-app).
+- Maintain a rolling local history per instrument.
+- Compute indicators with `pandas-ta`.
 
-### Persistence
-- Execution and audit records written to PostgreSQL + TimescaleDB hypertables.
+MVP indicators:
 
----
+- RSI
+- EMA / moving averages
+- MACD
 
-## 4.5 Risk Management Layer
+## 6.3 Rule Engine
 
-### Responsibilities
-- Intercept trade-intent signals before execution.
-- Evaluate user-level limits:
-  - Max position size
-  - Daily loss cap
-  - Max concurrent open trades
-  - Drawdown thresholds
+Responsibilities:
 
-### Data Strategy
-- Hot risk state maintained in Redis.
-- Periodic reconciliation against broker account state via OANDA REST.
+- Load user rules stored as JSON.
+- Evaluate trigger + condition logic on each incoming event.
+- Emit signal events (`BUY`, `SELL`, `ALERT`).
 
-### Outcomes
-- `RISK_APPROVED` routes to execution path.
-- `RISK_REJECTED` triggers user-facing reason notifications + audit logs.
+Example MVP rule:
 
----
+```text
+IF RSI < 30 AND price > EMA: BUY
+```
 
-## 4.6 Commodity Globe Intelligence Layer
+## 6.4 Paper Trading Engine
 
-### Responsibilities
-- Ingest geopolitical, weather, and news signals.
-- Perform NLP sentiment and entity extraction.
-- Classify disruptions by commodity class and severity.
+Responsibilities:
 
-### Topics
-- Raw ingestion topics → enrichment pipeline → `disruption.events`
+- Simulate instant fills when rules trigger.
+- Update virtual balance and positions.
+- Track realized/unrealized PnL.
+- Persist trade logs to SQLite.
 
-### Portfolio Relevance
-- Match disruptions to user positions/exposures.
-- Push only relevant disruptions to connected users.
+Example in-memory portfolio state:
 
-### Geospatial Data
-- Commodity hub and infrastructure geodata stored in PostGIS.
-- Supports proximity filtering and map query capabilities.
+```python
+portfolio = {
+    "balance": 10000,
+    "positions": []
+}
+```
 
----
+## 6.5 API + WebSocket Layer
 
-## 4.7 API Gateway and Real-Time Layer
+Responsibilities:
 
-### API Gateway
-- Responsibilities: auth, routing, rate limiting, usage tracking.
-- JWT access tokens with refresh token rotation.
+- Expose REST endpoints for rules, positions, and history.
+- Broadcast price/signal/trade updates over WebSocket.
 
-### WebSocket Gateway
-- Maintains active connection map in Redis.
-- Consumes event streams and performs targeted fan-out.
-- Event classes: signal updates, order states, confirmations, disruption alerts.
+Note: For strict MVP scope, a dashboard is optional; backend validation can run via logs + API responses.
+
+## 6.6 Persistence Layer (SQLite)
+
+Use SQLite for:
+
+- Rules
+- Paper orders/trades
+- Position snapshots
+- Basic event logs
+
+No PostgreSQL, TimescaleDB, Redis, or MongoDB is required at this stage.
 
 ---
 
-## 4.8 Billing and Metering Layer
+## 7. Deployment Model (MVP)
 
-### Responsibilities
-- Consume billable events from `billing.events`.
-- Aggregate usage by account and billing period.
-- Sync usage with Stripe usage-based billing.
+Primary target:
 
-### Billable Events (examples)
-- Executed trades
-- Premium signal evaluations
-- High-frequency API access tiers
+- One process
+- One machine
+- Local development environment
 
----
+Optional free hosting later:
 
-## 5. Data Storage Architecture
+- Render free tier
+- Railway free tier
+- Fly.io free tier
 
-- **PostgreSQL + TimescaleDB**
-  - Order executions, fills, PnL time series, latency metrics, audit trails.
-- **Redis**
-  - Hot path state: rule cache, indicator windows, risk counters, idempotency keys, WS connection maps.
-- **PostgreSQL + PostGIS**
-  - Geospatial commodity infrastructure and event overlays.
-- **MongoDB**
-  - User workflow JSON DAG definitions and versioned workflow metadata.
+Online deployment is optional; local validation is enough for the MVP milestone.
 
 ---
 
-## 6. Topic Taxonomy (Reference)
+## 8. $0 MVP Implementation Sequence
 
-- Market data: `prices.forex.*`
-- Indicators: `indicators.forex.*`
-- Rule outputs: `workflow.signals`
-- Risk decisions: `risk.decisions`
-- Execution lifecycle: `orders.lifecycle`
-- Disruption intelligence: `disruption.events`
-- Real-time notifications: `notifications.events`
-- Billing: `billing.events`
-- Dead-letter topics: `<topic>.dlq`
+1. **Price Feed (2–3 hours)**
+   - Connect to OANDA practice stream.
+   - Log ticks.
 
----
+2. **Indicators (1 day)**
+   - Add RSI + moving averages (and optionally MACD).
 
-## 7. Non-Functional Requirements
+3. **Rule Engine (1–2 days)**
+   - Parse/evaluate JSON rules.
+   - Emit buy/sell/alert signals.
 
-1. **Latency**
-   - Target p95 tick-to-order pipeline latency: `< 100ms` for auto-execute signals under nominal load.
+4. **Paper Trading (1 day)**
+   - Simulate positions and PnL.
+   - Record trade history in SQLite.
 
-2. **Scalability**
-   - Horizontal scaling via Kafka consumer groups for ingest, rules, risk, and execution workers.
+5. **Basic UI/inspection layer (1 day)**
+   - Show price, signals, and paper trades (or inspect through API/logs).
 
-3. **Availability**
-   - Graceful degradation when external providers fail.
-   - Circuit breakers and bounded retries for broker/API dependencies.
-
-4. **Consistency and correctness**
-   - At-least-once processing with idempotent consumers in critical services.
-   - Strict event schema versioning and contract validation.
-
-5. **Security**
-   - TLS in transit, secret rotation, least-privilege service identities.
-   - Audit trails for all execution and risk decisions.
+Expected result: a working automation core at zero infrastructure cost.
 
 ---
 
-## 8. Deployment and Operations
+## 9. What This MVP Must Prove
 
-- Platform runs on Kubernetes (EKS/GKE).
-- Each service has independent autoscaling policy.
-- Prioritize scaling for:
-  - Rule engine workers
-  - WebSocket gateway
-  - Ingestion workers during market volatility windows
-- Use blue/green or canary deployment for execution path services.
-- Capture distributed traces (OpenTelemetry) across ingest → execution path.
+Success criteria:
 
----
+- Users can build and save workflow rules.
+- Signals trigger correctly and consistently.
+- Paper execution behavior is understandable.
+- Product flow is intuitive enough to use.
 
-## 9. Suggested Service Language Mapping
+Not required for MVP success:
 
-- **Go**: low-latency path services (ingestion, rules, risk, execution, WebSocket gateway).
-- **Python**: data/NLP-heavy services (indicators, disruption analysis).
-- **Node.js (optional)**: API composition layer where team productivity is highest.
+- Microservices
+- Kafka
+- Kubernetes
+- Multi-broker execution
+- Sub-100ms production latency guarantees
 
 ---
 
-## 10. Future Extensions
+## 10. Post-Validation Upgrade Path
 
-- Multi-broker abstraction layer (beyond OANDA).
-- Backtesting/replay service using Kafka event logs.
-- ML-based adaptive risk profiling.
-- Regional data residency partitioning for compliance.
+Only after user validation, progressively add:
+
+1. Managed message bus (Kafka/NATS/Redis Streams)
+2. Service separation (ingestion, rules, execution)
+3. PostgreSQL/TimescaleDB for scale analytics
+4. Real broker execution beyond paper mode
+5. Kubernetes and advanced observability
+
+This sequencing minimizes cost and engineering drag before product-market learning.
