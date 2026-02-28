@@ -1,29 +1,24 @@
 import React from 'react';
 import Card from './Card';
-import { BarChart, Bar, ResponsiveContainer, XAxis, AreaChart, Area, Tooltip, YAxis } from 'recharts';
-
-const volumeData = [
-  { month: 'Sep', vol: 200, net: 150 },
-  { month: 'Dec', vol: 150, net: 120 },
-  { month: 'Nov', vol: 180, net: 160 },
-  { month: 'Oct', vol: 120, net: 100 },
-  { month: 'Aug', vol: 220, net: 190 },
-];
+import { ResponsiveContainer, AreaChart, Area, Tooltip } from 'recharts';
 
 const ratioData = [
-  { day: '5 Jul', long: 60, short: 40 },
-  { day: '6 Jul', long: 55, short: 45 },
-  { day: '7 Jul', long: 65, short: 35 },
-  { day: '8 Jul', long: 45, short: 55 },
-  { day: '9 Jul', long: 50, short: 50 },
-  { day: '10 Jul', long: 75, short: 25 },
-  { day: '11 Jul', long: 70, short: 30 },
+  { time: '1', long: 40, short: 60 },
+  { time: '2', long: 45, short: 55 },
+  { time: '3', long: 42, short: 58 },
+  { time: '4', long: 48, short: 52 },
+  { time: '5', long: 50, short: 50 },
+  { time: '6', long: 47, short: 53 },
+  { time: '7', long: 52, short: 48 },
 ];
 
-const VolumeRatio = () => {
+const VolumeRatio = ({ className, onMoveUp, onMoveDown }) => {
   return (
-    <div className="grid grid-cols-2 gap-4 col-span-2">
+    <div className={`grid grid-cols-1 gap-4 ${className}`}>
+      {/* Buys/Sells Volume */}
       <Card
+        onMoveUp={onMoveUp}
+        onMoveDown={onMoveDown}
         title="Buys/Sells Volume"
         extra={
           <div className="flex bg-[#1a1a1a] rounded overflow-hidden border border-[#262626]">
@@ -35,36 +30,38 @@ const VolumeRatio = () => {
           </div>
         }
       >
-        <div className="grid grid-cols-4 gap-4 mb-4">
+        <div className="grid grid-cols-4 gap-2 mt-2">
            <div>
-             <span className="text-[8px] text-zinc-500 uppercase font-bold">Tans</span>
-             <p className="text-xs font-bold">45,447</p>
+              <p className="text-[6px] text-zinc-600 uppercase font-bold mb-1">Tans</p>
+              <p className="text-sm font-bold">45,447</p>
            </div>
            <div>
-             <span className="text-[8px] text-zinc-500 uppercase font-bold">Vol</span>
-             <p className="text-xs font-bold">150M$</p>
+              <p className="text-[6px] text-zinc-600 uppercase font-bold mb-1">Vol</p>
+              <p className="text-sm font-bold">150M$</p>
            </div>
            <div>
-             <span className="text-[8px] text-zinc-500 uppercase font-bold">Chain Fees</span>
-             <p className="text-xs font-bold">2.1M$</p>
+              <p className="text-[6px] text-zinc-600 uppercase font-bold mb-1">Chain Fees</p>
+              <p className="text-sm font-bold">2.1M$</p>
            </div>
            <div>
-             <span className="text-[8px] text-zinc-500 uppercase font-bold">Net Buy</span>
-             <p className="text-xs font-bold text-[#22c55e]">+15,256$</p>
+              <p className="text-[6px] text-zinc-600 uppercase font-bold mb-1">Net Buy</p>
+              <p className="text-sm font-bold text-[#22c55e]">+15,256$</p>
            </div>
         </div>
-        <div className="h-24 mt-4">
-           <ResponsiveContainer width="100%" height="100%">
-             <BarChart data={volumeData}>
-               <XAxis dataKey="month" hide />
-               <Bar dataKey="vol" fill="#3f3f46" radius={[2, 2, 0, 0]} barSize={12} />
-               <Bar dataKey="net" fill="#ffffff" radius={[2, 2, 0, 0]} barSize={12} />
-             </BarChart>
-           </ResponsiveContainer>
+
+        <div className="mt-6 flex justify-between items-end h-16 px-4">
+           {[30, 70, 40, 60, 50, 80, 45, 75, 55, 90].map((h, i) => (
+             <div key={i} className="flex gap-1">
+                <div className={`w-2 rounded-t-sm ${i % 2 === 0 ? 'bg-zinc-800/50 h-8' : 'bg-white h-12'}`} />
+             </div>
+           ))}
         </div>
       </Card>
 
+      {/* Long/Short Ratio */}
       <Card
+        onMoveUp={onMoveUp}
+        onMoveDown={onMoveDown}
         title="Long/Short Ratio"
         extra={
           <div className="flex bg-[#1a1a1a] rounded overflow-hidden border border-[#262626]">
@@ -76,40 +73,41 @@ const VolumeRatio = () => {
           </div>
         }
       >
-        <div className="h-40 mt-4 relative">
+        <div className="h-24 w-full mt-4 relative">
           <ResponsiveContainer width="100%" height="100%">
-             <AreaChart data={ratioData}>
-                <defs>
-                   <linearGradient id="colorLong" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="#ffffff" stopOpacity={0.1}/>
-                      <stop offset="95%" stopColor="#ffffff" stopOpacity={0}/>
-                   </linearGradient>
-                </defs>
-                <Area type="monotone" dataKey="long" stroke="#ffffff" fillOpacity={1} fill="url(#colorLong)" strokeWidth={1} />
-                <Area type="monotone" dataKey="short" stroke="#262626" fillOpacity={0.1} fill="#141414" strokeWidth={1} />
-                <Tooltip
-                  contentStyle={{ backgroundColor: '#141414', border: '1px solid #262626', borderRadius: '4px', fontSize: '10px' }}
-                />
-             </AreaChart>
+            <AreaChart data={ratioData}>
+              <defs>
+                <linearGradient id="colorLong" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="5%" stopColor="#ffffff" stopOpacity={0.1}/>
+                  <stop offset="95%" stopColor="#ffffff" stopOpacity={0}/>
+                </linearGradient>
+              </defs>
+              <Tooltip
+                contentStyle={{ backgroundColor: '#141414', border: '1px solid #262626', fontSize: '8px' }}
+                itemStyle={{ color: '#fff' }}
+              />
+              <Area
+                type="monotone"
+                dataKey="long"
+                stroke="#ffffff"
+                fillOpacity={1}
+                fill="url(#colorLong)"
+                strokeWidth={1}
+              />
+            </AreaChart>
           </ResponsiveContainer>
-          <div className="absolute top-0 right-0 p-2 bg-[#1a1a1a]/80 backdrop-blur-sm rounded-md border border-[#262626] text-[8px] pointer-events-none">
-             <div className="flex flex-col gap-1">
-                <span className="text-zinc-500 uppercase mb-1">10 Jul 2025, 8:00</span>
-                <div className="flex items-center gap-2">
-                   <div className="w-1 h-1 bg-white rounded-full"></div>
-                   <span>Long: 43.42%</span>
-                </div>
-                <div className="flex items-center gap-2">
-                   <div className="w-1 h-1 bg-zinc-500 rounded-full"></div>
-                   <span>Long/Short: 1.1052</span>
-                </div>
+
+          <div className="absolute top-0 right-0 bg-[#141414] border border-[#262626] rounded-sm p-1.5 shadow-xl">
+             <p className="text-[6px] text-zinc-500 mb-1">10 JUL 2025, 8:00</p>
+             <div className="flex items-center gap-2 mb-0.5">
+                <div className="w-1 h-1 rounded-full bg-white" />
+                <span className="text-[7px] text-zinc-400">Long: 43.42%</span>
+             </div>
+             <div className="flex items-center gap-2">
+                <div className="w-1 h-1 rounded-full bg-zinc-700" />
+                <span className="text-[7px] text-zinc-400">Long/Short: 1.1052</span>
              </div>
           </div>
-        </div>
-        <div className="flex justify-between mt-2 px-1">
-           {['5 Jul', '6 Jul', '7 Jul', '8 Jul', '9 Jul', '10 Jul', '11 Jul'].map((d) => (
-             <span key={d} className="text-[8px] text-zinc-600">{d}</span>
-           ))}
         </div>
       </Card>
     </div>

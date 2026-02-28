@@ -1,7 +1,7 @@
 import React from 'react';
-import { ResponsiveContainer, ComposedChart, Line, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend } from 'recharts';
+import { ResponsiveContainer, ComposedChart, Line, Bar, XAxis, YAxis, CartesianGrid, Tooltip } from 'recharts';
 import Card from './Card';
-import { Maximize2, Minimize2, MoreHorizontal } from 'lucide-react';
+import { Maximize2 } from 'lucide-react';
 
 const data = [
   { time: '10am', price: 7.2000, volume: 100 },
@@ -18,10 +18,12 @@ const data = [
   { time: '8am', price: 7.5520, volume: 120 },
 ];
 
-const PriceChart = () => {
+const PriceChart = ({ className, onMoveUp, onMoveDown }) => {
   return (
     <Card
-      className="col-span-2"
+      className={className}
+      onMoveUp={onMoveUp}
+      onMoveDown={onMoveDown}
       title={
         <div className="flex items-center gap-4">
           <div className="flex items-center gap-2">
