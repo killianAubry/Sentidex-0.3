@@ -1,24 +1,123 @@
-import React from 'react';
-import { ResponsiveContainer, ComposedChart, Line, Bar, XAxis, YAxis, CartesianGrid, Tooltip } from 'recharts';
+import React, { useEffect, useRef, useState } from 'react';
+import { createChart, ColorType } from 'lightweight-charts';
 import Card from './Card';
 import { Maximize2 } from 'lucide-react';
 
-const data = [
-  { time: '10am', price: 7.2000, volume: 100 },
-  { time: '12pm', price: 7.4000, volume: 120 },
-  { time: '2pm', price: 7.3000, volume: 90 },
-  { time: '4pm', price: 7.5000, volume: 150 },
-  { time: '6pm', price: 8.1000, volume: 200 },
-  { time: '8pm', price: 7.8000, volume: 130 },
-  { time: '10pm', price: 8.4000, volume: 250 },
-  { time: '12am', price: 7.9000, volume: 110 },
-  { time: '2am', price: 7.6000, volume: 80 },
-  { time: '4am', price: 7.5520, volume: 100 },
-  { time: '6am', price: 7.6000, volume: 140 },
-  { time: '8am', price: 7.5520, volume: 120 },
-];
+const PriceChart = ({ className, onMoveUp, onMoveDown, socket }) => {
+  const chartContainerRef = useRef();
+  const chartRef = useRef();
+  const seriesRef = useRef();
+  const [range, setRange] = useState('1M');
 
-const PriceChart = ({ className, onMoveUp, onMoveDown }) => {
+  useEffect(() => {
+    if (!socket || !seriesRef.current) return;
+
+    const handlePriceUpdate = (data) => {
+      // data: { symbol: 'SUI', price: 7.65, timestamp: 1625000000 }
+      // In a real candlestick chart, we'd update the current candle or start a new one
+      // For this mockup, we'll update the last candle with the new price
+      seriesRef.current.update({
+        time: Math.floor(data.timestamp / 1000),
+        value: data.price, // update requires {time, value} for Line or specific candle fields for Candlestick
+        // However, update() on Candlestick series can take {time, open, high, low, close}
+        open: data.price - 0.02,
+        high: data.price + 0.05,
+        low: data.price - 0.05,
+        close: data.price
+      });
+    };
+
+    socket.on('priceUpdate', handlePriceUpdate);
+    return () => socket.off('priceUpdate', handlePriceUpdate);
+  }, [socket]);
+
+  useEffect(() => {
+    const handleResize = () => {
+      chartRef.current.applyOptions({ width: chartContainerRef.current.clientWidth });
+    };
+
+    chartRef.current = createChart(chartContainerRef.current, {
+      layout: {
+        background: { type: ColorType.Solid, color: 'transparent' },
+        textColor: '#d1d5db',
+      },
+      grid: {
+        vertLines: { color: '#1f1f1f' },
+        horzLines: { color: '#1f1f1f' },
+      },
+      width: chartContainerRef.current.clientWidth,
+      height: 350,
+      timeScale: {
+        borderColor: '#262626',
+      },
+      rightPriceScale: {
+        borderColor: '#262626',
+      },
+    });
+
+    seriesRef.current = chartRef.current.addCandlestickSeries({
+      upColor: '#26a69a',
+      downColor: '#ef5350',
+      borderVisible: false,
+      wickUpColor: '#26a69a',
+      wickDownColor: '#ef5350',
+    });
+
+    // Mock initial data
+    const initialData = [];
+    let baseTime = Math.floor(Date.now() / 1000) - (100 * 3600);
+    let lastPrice = 7.5520;
+
+    for (let i = 0; i < 100; i++) {
+      const open = lastPrice;
+      const close = open + (Math.random() - 0.5) * 0.1;
+      initialData.push({
+        time: baseTime + (i * 3600),
+        open: open,
+        high: Math.max(open, close) + Math.random() * 0.05,
+        low: Math.min(open, close) - Math.random() * 0.05,
+        close: close,
+      });
+      lastPrice = close;
+    }
+
+    seriesRef.current.setData(initialData);
+
+    window.addEventListener('resize', handleResize);
+
+    return () => {
+      window.removeEventListener('resize', handleResize);
+      chartRef.current.remove();
+    };
+  }, []);
+
+  // Update data based on range
+  useEffect(() => {
+    if (!seriesRef.current) return;
+
+    // In a real app, fetch new data for the selected range here
+    const newData = [];
+    let baseTime = Math.floor(Date.now() / 1000) - (100 * 3600);
+    let lastPrice = 7.5520;
+
+    const count = range === '1D' ? 24 : range === '7D' ? 168 : 100;
+    const interval = range === '1D' ? 3600 : 3600;
+
+    for (let i = 0; i < count; i++) {
+      const open = lastPrice;
+      const close = open + (Math.random() - 0.5) * 0.1;
+      newData.push({
+        time: baseTime + (i * interval),
+        open: open,
+        high: Math.max(open, close) + Math.random() * 0.05,
+        low: Math.min(open, close) - Math.random() * 0.05,
+        close: close,
+      });
+      lastPrice = close;
+    }
+    seriesRef.current.setData(newData);
+  }, [range]);
+
   return (
     <Card
       className={className}
@@ -40,7 +139,11 @@ const PriceChart = ({ className, onMoveUp, onMoveDown }) => {
         <div className="flex items-center gap-2">
           <div className="flex bg-[#1a1a1a] rounded overflow-hidden border border-[#262626]">
             {['1D', '7D', '1M', '1Y', 'All'].map((t) => (
-              <button key={t} className={`px-2 py-0.5 text-[10px] ${t === '1M' ? 'bg-zinc-800 text-white' : 'text-zinc-500 hover:text-zinc-300'}`}>
+              <button
+                key={t}
+                onClick={() => setRange(t)}
+                className={`px-2 py-0.5 text-[10px] ${range === t ? 'bg-zinc-800 text-white' : 'text-zinc-500 hover:text-zinc-300'}`}
+              >
                 {t}
               </button>
             ))}
@@ -49,46 +152,7 @@ const PriceChart = ({ className, onMoveUp, onMoveDown }) => {
         </div>
       }
     >
-      <div className="h-[350px] w-full mt-2">
-        <ResponsiveContainer width="100%" height="100%">
-          <ComposedChart data={data} margin={{ top: 10, right: 0, left: -20, bottom: 0 }}>
-            <CartesianGrid strokeDasharray="0" vertical={false} stroke="#1f1f1f" />
-            <XAxis
-              dataKey="time"
-              axisLine={false}
-              tickLine={false}
-              tick={{fill: '#52525b', fontSize: 10}}
-              interval="preserveStartEnd"
-            />
-            <YAxis
-              orientation="right"
-              axisLine={false}
-              tickLine={false}
-              tick={{fill: '#52525b', fontSize: 10}}
-              domain={['auto', 'auto']}
-            />
-            <Tooltip
-              contentStyle={{ backgroundColor: '#141414', borderColor: '#262626', color: '#fff', fontSize: '10px' }}
-              itemStyle={{ color: '#fff' }}
-            />
-            <Bar
-              dataKey="volume"
-              fill="#262626"
-              opacity={0.5}
-              yAxisId={0}
-              barSize={30}
-            />
-            <Line
-              type="monotone"
-              dataKey="price"
-              stroke="#ffffff"
-              strokeWidth={1.5}
-              dot={false}
-              animationDuration={1000}
-            />
-          </ComposedChart>
-        </ResponsiveContainer>
-      </div>
+      <div ref={chartContainerRef} className="h-[350px] w-full mt-2" />
     </Card>
   );
 };

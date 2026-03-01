@@ -1,5 +1,5 @@
 import React from 'react';
-import { Search, Bell, User, Zap, Wallet, BarChart2, BellDot } from 'lucide-react';
+import { Search, Bell, Zap } from 'lucide-react';
 
 const Header = () => {
   return (
@@ -22,10 +22,8 @@ const Header = () => {
         </div>
 
         <nav className="flex items-center gap-6">
-          <a href="#" className="text-sm font-medium text-zinc-400 hover:text-white transition-colors">AI Signals</a>
-          <a href="#" className="text-sm font-medium text-zinc-400 hover:text-white transition-colors">Stake</a>
-          <a href="#" className="text-sm font-medium text-zinc-400 hover:text-white transition-colors">Portfolio</a>
-          <a href="#" className="text-sm font-medium text-zinc-400 hover:text-white transition-colors">Smart Alerts</a>
+          <a href="/" className="text-sm font-medium text-white transition-colors">Dashboard</a>
+          <a href="#" className="text-sm font-medium text-zinc-400 hover:text-white transition-colors">Automations</a>
         </nav>
       </div>
 

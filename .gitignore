@@ -1,0 +1,7 @@
+node_modules/
+dist/
+.DS_Store
+*.log
+verification/
+backend/node_modules/
+ai-dashboard/node_modules/

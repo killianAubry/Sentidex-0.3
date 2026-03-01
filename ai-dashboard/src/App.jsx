@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useEffect } from 'react';
+import { io } from 'socket.io-client';
 import Layout from './components/Layout';
 import Header from './components/Header';
 import Portfolio from './components/Portfolio';
@@ -10,14 +11,25 @@ import VolumeRatio from './components/VolumeRatio';
 import AutomationFlow from './components/AutomationFlow';
 
 function App() {
-  const [modules, setModules] = useState([
+  const [socket, setSocket] = React.useState(null);
+  const [modules, setModules] = React.useState([
     { id: 'PriceChart', component: PriceChart, className: 'col-span-2' },
     { id: 'Portfolio', component: Portfolio, className: 'col-span-1' },
     { id: 'Heatmap', component: Heatmap, className: 'col-span-1' },
     { id: 'Holders', component: Holders, className: 'col-span-1' },
     { id: 'VolumeRatio', component: VolumeRatio, className: 'col-span-1' },
     { id: 'Unlocks', component: Unlocks, className: 'col-span-1' },
+    { id: 'AutomationFlow', component: AutomationFlow, className: 'col-span-1 md:col-span-3' },
   ]);
+
+  useEffect(() => {
+    const newSocket = io('http://localhost:3001');
+    setSocket(newSocket);
+    newSocket.on('connect', () => {
+      console.log('Connected to backend');
+    });
+    return () => newSocket.disconnect();
+  }, []);
 
   const moveUp = (index) => {
     if (index === 0) return;
@@ -46,12 +58,10 @@ function App() {
               className={module.className}
               onMoveUp={() => moveUp(index)}
               onMoveDown={() => moveDown(index)}
+              socket={socket}
             />
           );
         })}
-
-        {/* Automations Flow - Always at the bottom for now as it's full-width */}
-        <AutomationFlow />
       </div>
     </Layout>
   );
