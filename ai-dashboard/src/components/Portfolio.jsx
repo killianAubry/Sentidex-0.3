@@ -1,65 +1,82 @@
 import React from 'react';
 import Card from './Card';
-import { Share2, MoreHorizontal } from 'lucide-react';
+import { Share2, MoreHorizontal, TrendingUp, TrendingDown } from 'lucide-react';
 
-const Portfolio = ({ className, onMoveUp, onMoveDown }) => {
+const STATS = [
+  { label: 'Today', value: '3,585$', change: '+25.50%', up: true },
+  { label: 'Month', value: '12,005$', change: '-5.50%', up: false },
+  { label: 'Year', value: '125,000$', change: '+25.50%', up: true },
+];
+
+const ALLOCATIONS = [
+  { label: 'USDT', pct: '35%', color: 'bg-white', width: 'w-[35%]' },
+  { label: 'ETH', pct: '32.5%', color: 'bg-zinc-500', width: 'w-[32.5%]' },
+  { label: 'SUI', pct: '20.5%', color: 'bg-zinc-700', width: 'w-[20.5%]' },
+  { label: 'UNI', pct: '12%', color: 'bg-zinc-800', width: 'w-[12%]' },
+];
+
+const Portfolio = ({ className }) => {
   return (
     <Card
       className={className}
-      onMoveUp={onMoveUp}
-      onMoveDown={onMoveDown}
+      bodyClassName="flex flex-col"
       title="Portfolio"
       extra={
         <div className="flex items-center gap-2">
-          <button className="bg-[#22c55e]/10 text-[#22c55e] border border-[#22c55e]/20 px-3 py-1 rounded text-[10px] hover:bg-[#22c55e]/20 transition-all font-bold">
+          <button className="bg-[#22c55e]/10 text-[#22c55e] border border-[#22c55e]/20 px-2.5 py-1 rounded-lg text-[9px] hover:bg-[#22c55e]/20 transition-all font-bold">
             Buy SUI
           </button>
-          <Share2 size={12} className="text-zinc-500 hover:text-white cursor-pointer" />
-          <MoreHorizontal size={12} className="text-zinc-500 hover:text-white cursor-pointer" />
+          <Share2 size={11} className="text-zinc-600 hover:text-white cursor-pointer transition-colors" />
+          <MoreHorizontal size={11} className="text-zinc-600 hover:text-white cursor-pointer transition-colors" />
         </div>
       }
     >
-      <div className="grid grid-cols-3 gap-2 mt-2">
-        <div>
-           <p className="text-[8px] text-zinc-600 uppercase font-bold mb-1">Today</p>
-           <p className="text-xl font-bold">3,585$</p>
-           <p className="text-[8px] text-[#22c55e] mt-1 font-bold">↗ 25.50%</p>
-        </div>
-        <div>
-           <p className="text-[8px] text-zinc-600 uppercase font-bold mb-1">Month</p>
-           <p className="text-xl font-bold">12,005$</p>
-           <p className="text-[8px] text-[#ef4444] mt-1 font-bold">↘ 5.50%</p>
-        </div>
-        <div>
-           <p className="text-[8px] text-zinc-600 uppercase font-bold mb-1">Year</p>
-           <p className="text-xl font-bold">125,000$</p>
-           <p className="text-[8px] text-[#22c55e] mt-1 font-bold">↗ 25.50%</p>
-        </div>
-      </div>
-
-      <div className="mt-6 flex gap-1">
-        {Array(20).fill(null).map((_, i) => (
-          <div key={i} className={`h-3 w-3 rounded-sm ${i < 12 ? 'bg-zinc-700/50' : 'bg-zinc-800/30'}`} />
+      {/* Stats */}
+      <div className="grid grid-cols-3 gap-2 flex-shrink-0">
+        {STATS.map(({ label, value, change, up }) => (
+          <div key={label}>
+            <p className="text-[8px] text-zinc-600 uppercase font-bold mb-1">{label}</p>
+            <p className="text-lg font-bold leading-tight">{value}</p>
+            <div className={`flex items-center gap-0.5 mt-0.5 ${up ? 'text-[#22c55e]' : 'text-[#ef4444]'}`}>
+              {up ? <TrendingUp size={9} /> : <TrendingDown size={9} />}
+              <span className="text-[9px] font-bold">{change}</span>
+            </div>
+          </div>
         ))}
       </div>
 
-      <div className="mt-4 flex flex-wrap gap-x-4 gap-y-2 text-[8px] font-bold text-zinc-500">
-         <div className="flex items-center gap-1">
-            <div className="w-1.5 h-1.5 rounded-full bg-white" />
-            <span>USDT <span className="text-white">35%</span></span>
-         </div>
-         <div className="flex items-center gap-1">
-            <div className="w-1.5 h-1.5 rounded-full bg-zinc-600" />
-            <span>ETH <span className="text-white">32.5%</span></span>
-         </div>
-         <div className="flex items-center gap-1">
-            <div className="w-1.5 h-1.5 rounded-full bg-zinc-700" />
-            <span>SUI <span className="text-white">20.5%</span></span>
-         </div>
-         <div className="flex items-center gap-1">
-            <div className="w-1.5 h-1.5 rounded-full bg-zinc-800" />
-            <span>UNI <span className="text-white">10.2%</span></span>
-         </div>
+      {/* Pixel allocation map */}
+      <div className="flex-1 flex flex-col justify-end gap-2 mt-3">
+        <div className="flex gap-0.5 flex-wrap">
+          {Array(60).fill(null).map((_, i) => (
+            <div
+              key={i}
+              className={`w-2.5 h-2.5 rounded-sm ${
+                i < 21 ? 'bg-white/80' :
+                i < 40 ? 'bg-zinc-600/70' :
+                i < 52 ? 'bg-zinc-700/60' :
+                'bg-zinc-800/50'
+              }`}
+            />
+          ))}
+        </div>
+
+        {/* Allocation bar */}
+        <div className="w-full h-1.5 bg-[#1a1a1a] rounded-full flex overflow-hidden">
+          {ALLOCATIONS.map((a) => (
+            <div key={a.label} className={`h-full ${a.color} ${a.width}`} />
+          ))}
+        </div>
+
+        {/* Legend */}
+        <div className="flex flex-wrap gap-x-3 gap-y-1">
+          {ALLOCATIONS.map((a) => (
+            <div key={a.label} className="flex items-center gap-1">
+              <div className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${a.color}`} />
+              <span className="text-[8px] text-zinc-600">{a.label} <span className="text-zinc-400">{a.pct}</span></span>
+            </div>
+          ))}
+        </div>
       </div>
     </Card>
   );

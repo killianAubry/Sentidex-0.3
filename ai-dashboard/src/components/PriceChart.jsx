@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { createChart, ColorType } from 'lightweight-charts';
 import Card from './Card';
-import { Maximize2 } from 'lucide-react';
+import { Maximize2, ChevronDown } from 'lucide-react';
 
 const PriceChart = ({ className, onMoveUp, onMoveDown, socket }) => {
   const chartContainerRef = useRef();
@@ -121,18 +121,21 @@ const PriceChart = ({ className, onMoveUp, onMoveDown, socket }) => {
   return (
     <Card
       className={className}
-      onMoveUp={onMoveUp}
-      onMoveDown={onMoveDown}
+      bodyClassName="flex flex-col"
       title={
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-3">
           <div className="flex items-center gap-2">
-            <div className="w-5 h-5 bg-zinc-800 rounded-full flex items-center justify-center text-[8px] border border-zinc-700">S</div>
-            <span className="text-white font-bold text-xs">SUI</span>
+            <div className="w-5 h-5 bg-[#1a1a1a] border border-[#333] rounded-full flex items-center justify-center text-[9px] font-bold text-zinc-300">S</div>
+            <span className="text-white font-semibold text-[11px]">SUI</span>
+            <span className="text-[9px] text-zinc-600">·</span>
+            <span className="text-[9px] text-zinc-500">$7.5520</span>
+            <span className="text-[9px] text-[#22c55e] font-medium">+2.8%</span>
           </div>
-          <div className="flex items-center gap-2 bg-[#1a1a1a] rounded px-2 py-0.5 border border-[#262626] text-[10px] text-zinc-400">
-             <span>Indicators</span>
+          <div className="hidden lg:flex items-center gap-1.5 bg-[#0e0e0e] border border-[#1e1e1e] rounded-md px-2 py-0.5 text-[9px] text-zinc-500 cursor-pointer hover:border-[#333] transition-colors">
+            Indicators
+            <ChevronDown size={9} />
           </div>
-          <span className="text-[10px] text-zinc-500">Price / Market cap</span>
+          <span className="hidden lg:block text-[9px] text-zinc-600">Price / Market cap</span>
         </div>
       }
       extra={
@@ -148,7 +151,7 @@ const PriceChart = ({ className, onMoveUp, onMoveDown, socket }) => {
               </button>
             ))}
           </div>
-          <Maximize2 size={12} className="text-zinc-500" />
+          <Maximize2 size={11} className="text-zinc-600 hover:text-zinc-300 cursor-pointer transition-colors" />
         </div>
       }
     >

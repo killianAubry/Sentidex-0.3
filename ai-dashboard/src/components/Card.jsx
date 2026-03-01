@@ -1,25 +1,14 @@
 import React from 'react';
-import { ChevronDown } from 'lucide-react';
 
-const Card = ({ title, children, extra, className = "", onMoveUp, onMoveDown }) => {
+const Card = ({ title, children, extra, className = "", bodyClassName = "", onMoveUp, onMoveDown }) => {
   return (
-    <div className={`bg-[#141414] border border-[#262626] rounded-xl overflow-hidden flex flex-col transition-all ${className}`}>
+    <div className={`bg-[#141414] border border-[#1e1e1e] rounded-xl overflow-hidden flex flex-col transition-all ${className}`}>
       {/* Header */}
       {(title || extra) && (
-        <div className="px-4 py-3 flex items-center justify-between border-b border-[#262626]/50">
+        <div className="px-3.5 py-2.5 flex items-center justify-between border-b border-[#1e1e1e] flex-shrink-0">
           <div className="flex items-center gap-2">
-            {onMoveUp && (
-              <div className="flex flex-col -space-y-1">
-                <button onClick={onMoveUp} className="text-zinc-600 hover:text-white transition-colors rotate-180">
-                   <ChevronDown size={12} />
-                </button>
-                <button onClick={onMoveDown} className="text-zinc-600 hover:text-white transition-colors">
-                   <ChevronDown size={12} />
-                </button>
-              </div>
-            )}
             {typeof title === 'string' ? (
-              <h3 className="text-zinc-400 font-bold uppercase tracking-wider text-[10px]">{title}</h3>
+              <h3 className="text-zinc-500 font-bold uppercase tracking-wider text-[9px]">{title}</h3>
             ) : (
               title
             )}
@@ -33,7 +22,7 @@ const Card = ({ title, children, extra, className = "", onMoveUp, onMoveDown }) 
       )}
 
       {/* Content */}
-      <div className="flex-1 p-4">
+      <div className={`flex-1 p-3.5 overflow-hidden ${bodyClassName}`}>
         {children}
       </div>
     </div>
