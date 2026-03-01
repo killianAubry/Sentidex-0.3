@@ -1,14 +1,5 @@
 import React from 'react';
-import { Link, useLocation } from 'react-router-dom';
 import { Search, Bell, Zap } from 'lucide-react';
-
-const NAV_LINKS = [
-  { label: 'AI Signals', to: '#' },
-  { label: 'Stake', to: '#' },
-  { label: 'Portfolio', to: '#' },
-  { label: 'Automations', to: '/automations' },
-  { label: 'Smart Alerts', to: '#' },
-];
 
 const Header = () => {
   const location = useLocation();
@@ -35,24 +26,9 @@ const Header = () => {
           <kbd className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[9px] text-zinc-700 bg-[#1a1a1a] border border-[#262626] rounded px-1">/</kbd>
         </div>
 
-        {/* Nav */}
-        <nav className="flex items-center gap-1">
-          {NAV_LINKS.map(({ label, to }) => {
-            const isActive = to !== '#' && location.pathname === to;
-            return (
-              <Link
-                key={label}
-                to={to}
-                className={`px-3 py-1.5 text-xs rounded-md transition-all ${
-                  isActive
-                    ? 'text-white bg-white/5 font-medium'
-                    : 'text-zinc-500 hover:text-zinc-200 hover:bg-white/3'
-                }`}
-              >
-                {label}
-              </Link>
-            );
-          })}
+        <nav className="flex items-center gap-6">
+          <a href="/" className="text-sm font-medium text-white transition-colors">Dashboard</a>
+          <a href="#" className="text-sm font-medium text-zinc-400 hover:text-white transition-colors">Automations</a>
         </nav>
       </div>
 
